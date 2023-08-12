@@ -19,9 +19,9 @@ programmatically by passing in the relevant props.
 
 
 ## [Dropdown select list](dropdown-list)
-A component with similar functions to `HTML Select` for React-Native. On press it opens 
-a modal with all the options. A search box is also available to filter the options 
-for large lists.
+A component for React-Native with similar functions to the HTML `Select` element.
+On press it opens a modal that lists all the options. A search box is also available 
+to filter the options for large lists.
 <div>
   <img src='../assets/droplist-close.png' alt='bottom drawer close' width="400">
   <img src='../assets/droplist-open.png' alt='bottom drawer open' width="400">
