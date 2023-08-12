@@ -4,16 +4,16 @@
  * Uses superagent for http requests and jsonwebtoken for
  * verifying JWTs.
  * 
- * The Auth0AccessToken are any relevant claims that is to be
+ * The Auth0AccessToken type contains any relevant claims that is to be
  * extracted from the token payload.
- * For a break down of the claims available.
+ * For a break down of the claims.
  * @see https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-token-claims
  *
  * In this example the relevant client information are stored
  * as env vars.
  * 
  * Adapted from concepts and examples mentioned here:
- * https://auth0.com/blog/navigating-rs256-and-jwks/
+ * @see https://auth0.com/blog/navigating-rs256-and-jwks/
  */
 import * as request from 'superagent';
 import * as jwt from 'jsonwebtoken';
@@ -54,6 +54,7 @@ export interface Auth0ClientOptions {
   ignoreExpiration?: boolean;
 }
 
+//Ignore token expiration date during development.
 const defaultOptions: Auth0ClientOptions = {
   cacheTime: 60000,
   ignoreExpiration: process.env.NODE_ENV === 'development',
