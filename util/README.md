@@ -10,9 +10,10 @@ authenticating tokens outside of typical request/response cycles.
 
 ## [parsePropertyNames](parsePropertyNames.ts)
 Utility for parsing an object and maps all of its terminal(leaf) properties
-to a string that is made up of itself and all of its ancestors.
+to a string that is made up of itself and all of its ancestors. The values
+are discarded.
 
-`{a: 'a', b: { c: 'c'} } with # as the separator` becomes `{a: 'a', b: { c: 'b#c'}}`
+`{a: 'hello', b: { c: 'world'} } with # as the separator` becomes `{a: 'a', b: { c: 'b#c'}}`
 
 
 ## [useLocation](useLocation)
