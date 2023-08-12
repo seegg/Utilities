@@ -1,10 +1,9 @@
 /**
- * A simple way to add extra functionality on top of the
- * socket.io client without having to touch any base code.
+ * A simple way to add extra functionality to a socket.io
+ * client without having to touch any base code.
  * 
- * AuthService can be any external service that the new functions 
- * depends on. In this case it acts as as a service
- * for an authentication provider.
+ * AuthService in this example is a service that handles
+ * authentication.
  */
 
 import {
@@ -62,11 +61,6 @@ export class AuthSocket<
    * in the same time.
    */
   credentialRefreshLock: PromiseLockResult | null;
-  /**
-   * This is use to make sure socket connection is reestablished
-   * before emitting any waiting message.
-   */
-  socketEmitLock: PromiseLockResult | null;
 
   constructor(
     socketInstance: Socket,
@@ -77,7 +71,6 @@ export class AuthSocket<
     this.authService = auth;
     this.credentialRefreshThreshold = refreshThreshold;
     this.credentialRefreshLock = null;
-    this.socketEmitLock = null;
     this.socketClientInstance.authEmit = this._authEmit.bind(this);
     this.socketClientInstance.authConnect = this._authConnect.bind(this);
   }
@@ -111,15 +104,6 @@ export class AuthSocket<
     if (await this._refreshCredentialsIfNecessary()) {
       // Reconnect after updating credentials.
       this.socketClientInstance.disconnect().connect();
-
-      // Utilises how Promises function to wait until the connection
-      // for the namespace is reestablished before emitting the message.
-      this.socketEmitLock = promiseLock();
-      this.socketClientInstance.once('connect', this.socketEmitLock?.unlock);
-    }
-    if (this.socketEmitLock) {
-      await this.socketEmitLock.lock;
-      this.socketEmitLock = null;
     }
     return this.socketClientInstance.emit(ev, ...args);
   }
@@ -162,9 +146,15 @@ export class AuthSocket<
       if (this.credentialRefreshLock === null) {
         this.credentialRefreshLock = promiseLock();
       }
-      await this.authService.silentTokenRefresh();
-      this.credentialRefreshLock?.unlock();
-      this.credentialRefreshLock = null;
+      try {
+        await this.authService.silentTokenRefresh();
+        this.credentialRefreshLock?.unlock();
+        this.credentialRefreshLock = null;
+      } catch(err) {
+        this.credentialRefreshLock?.unlock();
+        this.credentialRefreshLock = null;
+        throw err;
+      }
     }
     this._addCredentials();
     return true;
