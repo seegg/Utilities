@@ -1,2 +1,2 @@
 
-# A collection of utilities and general React/React-Native components
+# A collection of utilities, custom hooks, and general React/React-Native components
