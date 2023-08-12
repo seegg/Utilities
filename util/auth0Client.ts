@@ -180,20 +180,18 @@ export class Auth0Client {
       await this.deferJWKRequest;
     }
     if (this.cacheIsStale()) {
-      if (this.cacheIsStale()) {
-        try{
-          let resolve: (value?: unknown) => void;
-          this.deferJWKRequest = new Promise((res) => {
-            resolve = res;
-          });
-          await this.updateKeyCache();
-          this.deferJWKRequest = null;
-          resolve();
-        }catch(err){
-          this.deferJWKRequest = null;
-          resolve();
-          throw err;
-        }
+      try{
+        let resolve: (value?: unknown) => void;
+        this.deferJWKRequest = new Promise((res) => {
+          resolve = res;
+        });
+        await this.updateKeyCache();
+        this.deferJWKRequest = null;
+        resolve();
+      }catch(err){
+        this.deferJWKRequest = null;
+        resolve();
+        throw err;
       }
     }
   }
