@@ -3,4 +3,4 @@ A React-Native wrapper component that is fixed to the bottom of another componen
 It can be open/closed to display/hide its child components. Further customisation can
 be had by extracting the various styles objects as part of the prop.
 
-![bottom drawer close](../assets/drawer-close.png) ![bottom drawer open](../assets/drawer-open.png)
+![bottom drawer close](../assets/drawer-close.png | width=500) ![bottom drawer open](../assets/drawer-open.png | width=500)
