@@ -44,7 +44,7 @@ interface IDrawerProps {
 }
 
 /**
- * Bottom drawer wrapper for other components.
+ * Bottom drawer wrapper for other components. 
  */
 const BottomDrawer = ({
   animationDuration = 500,
@@ -59,6 +59,12 @@ const BottomDrawer = ({
   dragBar = null,
   children,
 }: IDrawerProps) => {
+
+  if(minHeight > maxHeight) {
+    throw new TypeError(
+      `Bottom drawer min height must be less than or equal max height. minHeight: ${minHeight}, maxHeight: ${maxHeight}.`
+      )
+  }
 
   //Use to animate the drawer height.
   const animatedHeightValue = useRef(new Animated.Value(minHeight)).current;
@@ -122,8 +128,7 @@ const BottomDrawer = ({
   const handleOpenCloseState = () => {
     /**
      * If the difference between the minHeight/maxHeight and currentHeight is less than the
-     * threshold then the drawer is consider 'close'/'open'. Not using exact values because of
-     * floats.
+     * threshold then the drawer is consider 'close'/'open'.
      */
     const heightDiffThreshold = 2;
 
