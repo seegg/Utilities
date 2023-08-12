@@ -1,9 +1,5 @@
 /**
- * AuthSocket acts as a wrapper for a Socket.io client instance.
- * It adds extra `auth` methods that handles authentication
- * related tasks on top of their normal functionality.
- * 
- * It's a simple way to add extra functionality on top of the
+ * A simple way to add extra functionality on top of the
  * socket.io client without having to touch any base code.
  * 
  * AuthService can be any external service that the new functions 
