@@ -1,6 +1,7 @@
 ## [Bottom Drawer](bottom-drawer)
 A React-Native wrapper component that is fixed to the bottom of another 
-component. It can be open/close to display/hide its child components. 
+component. It can be open/close by dragging the top bar to display/hide 
+its child components. 
 
 The header can be customised by passing in a custom component with its 
 own style and functionality.
