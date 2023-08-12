@@ -1,5 +1,5 @@
 ### [authSocket](authSocket.ts)
-An example of extending functionality to a socket io client.
+An example of extending functionality on a socket io client.
 
 
 ### [auth0Client](auth0Client.ts)
