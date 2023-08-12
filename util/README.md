@@ -11,3 +11,23 @@ Utility for parsing an object and maps all of its terminal(leaf) properties
 to a string that is made up of itself and all of its ancestors.
 
 `{a: 'a', b: { c: 'c'} } with # as the separator` becomes `{a: 'a', b: { c: 'b#c'}}`
+
+
+### [useLocation](useLocation)
+A custom react hook for React-Native Expo that deals with location permissions
+on an android device.
+
+When requesting location permission, it first checks to see if it's possible to
+request it directly through the app, if not it falls back to asking for permission
+through `Settings`. If permission is not obtained it has the option to fall back to
+a static default location.
+
+It handles subscribing and unsubscribing to location updates.
+
+All location data with the exception of the `granted` permission status is local
+to the component that uses this hook. The reason for `granted` being the exception
+is because when location permission is either granted or revoked it has an effect
+on all location related tasks. In this example the `granted` state is stored as a
+redux state(implementation not shown.) but any other state management strategy, such
+as React.context, will work as well. This way if the status of `granted` changes all
+the instances of `useLocation` will know about it and act accordingly. 
