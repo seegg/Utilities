@@ -61,7 +61,7 @@ const BottomDrawer = ({
 }: IDrawerProps) => {
 
   //Use to animate the drawer height.
-  const heightAnim = useRef(new Animated.Value(minHeight)).current;
+  const animatedHeightValue = useRef(new Animated.Value(minHeight)).current;
 
   //Current drawer height. Updated from Animated.value callback.
   const currentHeight = useRef(minHeight);
@@ -161,7 +161,7 @@ const BottomDrawer = ({
    * @param duration The duration of the animation.
    */
   const animateHeight = (toHeight: number, duration = animationDuration) => {
-    Animated.timing(heightAnim, {
+    Animated.timing(animatedHeightValue, {
       toValue: toHeight,
       duration: duration,
       easing: Easing.out(Easing.exp),
@@ -185,11 +185,11 @@ const BottomDrawer = ({
         const adjustedHeight = heightInitial.current - dy;
 
         if (adjustedHeight > heightMax.current) {
-          heightAnim.setValue(heightMax.current);
+          animatedHeightValue.setValue(heightMax.current);
         } else if (adjustedHeight < minHeight) {
-          heightAnim.setValue(minHeight);
+          animatedHeightValue.setValue(minHeight);
         } else {
-          heightAnim.setValue(adjustedHeight);
+          animatedHeightValue.setValue(adjustedHeight);
         }
       },
       onPanResponderRelease: (e, { vy }) => {
@@ -218,14 +218,14 @@ const BottomDrawer = ({
   //set up the handlers for animated height change.
   useEffect(() => {
     //Update the height ref when the animated value changes.
-    heightAnim.addListener(({ value }) => {
+    animatedHeightValue.addListener(({ value }) => {
       currentHeight.current = value;
     });
 
     //clean up.
     return () => {
-      if (heightAnim.hasListeners()) {
-        heightAnim.removeAllListeners();
+      if (animatedHeightValue.hasListeners()) {
+        animatedHeightValue.removeAllListeners();
       }
     };
   }, []);
@@ -240,7 +240,7 @@ const BottomDrawer = ({
       style={[
         styles.container,
         {
-          height: heightAnim,
+          height: animatedHeightValue,
           borderTopLeftRadius: topCornerRadius,
           borderTopRightRadius: topCornerRadius,
         },
