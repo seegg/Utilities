@@ -1,10 +1,12 @@
 ## [authSocket](authSocket.ts)
-An example of extending functionality on a socket io client.
+An example of extending the functionality for a socket.io client. This uses
+a mixin sort of approach to avoid having to mess with any underlying socket.io
+code or prototypes.
 
 
 ## [auth0Client](auth0Client.ts)
-Standalone client for authenticating JWTs issued by auth0.
-
+Standalone client for authenticating JWTs issued by auth0. Useful for
+authenticating tokens outside of typical request/response cycles.
 
 ## [parsePropertyNames](parsePropertyNames.ts)
 Utility for parsing an object and maps all of its terminal(leaf) properties
