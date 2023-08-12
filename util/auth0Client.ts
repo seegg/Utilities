@@ -12,7 +12,7 @@
  * In this example the relevant client information are stored
  * as env vars.
  * 
- * Adapted from concepts mentioned here:
+ * Adapted from concepts and examples mentioned here:
  * https://auth0.com/blog/navigating-rs256-and-jwks/
  */
 import * as request from 'superagent';
