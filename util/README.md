@@ -1,19 +1,19 @@
-### [authSocket](authSocket.ts)
+## [authSocket](authSocket.ts)
 An example of extending functionality on a socket io client.
 
 
-### [auth0Client](auth0Client.ts)
+## [auth0Client](auth0Client.ts)
 Standalone client for authenticating JWTs issued by auth0.
 
 
-### [parsePropertyNames](parsePropertyNames.ts)
+## [parsePropertyNames](parsePropertyNames.ts)
 Utility for parsing an object and maps all of its terminal(leaf) properties
 to a string that is made up of itself and all of its ancestors.
 
 `{a: 'a', b: { c: 'c'} } with # as the separator` becomes `{a: 'a', b: { c: 'b#c'}}`
 
 
-### [useLocation](useLocation)
+## [useLocation](useLocation)
 A custom react hook for React-Native Expo that deals with location permissions
 on an android device.
 
