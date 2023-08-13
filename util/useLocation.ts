@@ -45,8 +45,8 @@ export interface UseLocationHookOptions {
  *
  * If location permission has been granted this will
  * be based on the user's device location, otherwise
- * this will be a static value retrieve from the user's
- * profile data.
+ * this will be a static value provided during the initial
+ * useLocation call.
  *
  * Accepts an optional config for things such as subscribing
  * to location updates.
