@@ -102,7 +102,9 @@ export class AuthSocket<
       throw new TypeError('User must be logged in to emit messages.');
     }
     if (await this._refreshCredentialsIfNecessary()) {
-      // Reconnect after updating credentials.
+      // Reconnect after updating credentials. any message
+      // emitted while the socket is disconnected are queued
+      // until it's reconnected.
       this.socketClientInstance.disconnect().connect();
     }
     return this.socketClientInstance.emit(ev, ...args);
