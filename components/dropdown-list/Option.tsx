@@ -1,6 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { Pressable, StyleSheet, Animated } from 'react-native';
-import { OptionTitle } from './Option-title';
+import { Pressable, StyleSheet, Animated, Text, TextProps } from 'react-native';
 
 interface IListOptionProps<T> {
   title: string;
@@ -67,6 +66,14 @@ const ListOption = <T,>({
   );
 };
 
+export const OptionTitle = ({ children, style = {}, ...props }: TextProps) => {
+  return (
+    <Text style={[styles.title, style]} {...props}>
+      {children}
+    </Text>
+  );
+};
+
 const styles = StyleSheet.create({
   container: {
     borderRadius: 10,
@@ -78,6 +85,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingStart: 5,
   },
+  title: {
+    fontFamily: 'Inter',
+    fontWeight: '400',
+    fontStyle: 'normal',
+    fontSize: 16,
+    lineHeight: 20,
+  }
 });
 
 export default ListOption;

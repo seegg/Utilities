@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, ScrollView, Modal, View } from 'react-native';
+import { Pressable, ScrollView, Modal, View, Text, TextProps, StyleSheet } from 'react-native';
 import CaretIcon from './caret.svg';
-import { OptionTitle } from './OptionTitle';
-import Label from './Label';
+import { OptionTitle } from './Option';
 import SearchBox from './SearchBox';
 import ListOption from './Option';
 
@@ -129,6 +128,14 @@ const DropDownSelectList = <T,>({
         </View>
       </Modal>
     </View>
+  );
+};
+
+const Label = ({ children, style = {}, ...props }: TextProps) => {
+  return (
+    <Text style={[styles.text, style]} {...props}>
+      {children}
+    </Text>
   );
 };
 
