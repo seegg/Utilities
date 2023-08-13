@@ -1,12 +1,3 @@
-## [authSocket](authSocket.ts)
-An example of extending the functionality for a socket.io client. Simple approach,
-avoid messing with any underlying socket.io code or prototype.
-
-
-## [auth0Client](auth0Client.ts)
-Standalone client for authenticating JWTs issued by auth0. Useful for
-authenticating tokens outside of typical request/response cycles.
-
 ## [parsePropertyNames](parsePropertyNames.ts)
 Utility for parsing an object and maps all of its terminal(leaf) properties
 to a string that is made up of itself and all of its ancestors. The values
@@ -15,7 +6,12 @@ are discarded.
 `{a: 'hello', b: { c: 'world'} } with # as the separator` becomes `{a: 'a', b: { c: 'b#c'}}`
 
 
-## [useLocation](useLocation)
+## [auth0Client](auth0Client.ts)
+Standalone client for authenticating JWTs issued by auth0. Useful for
+authenticating tokens outside of typical request/response cycles.
+
+
+## [useLocation](useLocation.ts)
 A custom react hook for React-Native Expo that deals with location permissions
 on an android device.
 
@@ -33,3 +29,7 @@ related tasks. In this example the `granted` state is stored as a redux state
 (implementation not shown.) but any other state management strategy, such as 
 React.context, will work as well. This way if the status of `granted` changes all
 the instances of `useLocation` will know about it and act accordingly. 
+
+## [authSocket](authSocket.ts)
+An example of extending the functionality for a socket.io client. Simple approach,
+avoid messing with any underlying socket.io code or prototype.
