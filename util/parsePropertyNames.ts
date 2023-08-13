@@ -20,9 +20,9 @@ export type ConvertValueType<T, G> = {
 };
 
 /**
- * Define something with key:string so ts will stop saying can't be index.
+ * Define something with key:string so TS will stop saying can't be index.
  */
-interface IInputObj {
+interface KeyValuePair {
   [key: string]: any;
 }
 
@@ -39,15 +39,14 @@ export const parseObjPropertyNames = <T>(
   concatenator: string,
 ): ConvertValueType<T, string> => {
   /**
-   * Helper function to parse through the object properties.
+   * Helper for parsing and keeping track of object properties.
    * @param prevPath The property path of the current level.
    */
   const parse = (input: any, prevPath: string) => {
     //if input value is not an object return the property path leading to it.
     if (!isValidObject(input)) return prevPath;
 
-    //if input is an object, store the parsed results in an new empty object.
-    const output: IInputObj = {};
+    const output: KeyValuePair = {};
 
     //parse all properties in input. if prevPath is empty then just use the key
     //otherwise join it with the concatenator.
