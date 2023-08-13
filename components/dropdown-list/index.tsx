@@ -19,8 +19,6 @@ interface IDropDownListProps<T> {
   onSelect?: (value: T, title?: string) => void;
   /** String to be displayed when no option has been selected.*/
   placeHolder?: string;
-  /** Optional label that is displayed on the top left of the component. */
-  label?: string;
   selectedValue?: T | null;
   disabled?: boolean;
 }
@@ -29,7 +27,6 @@ const DropDownSelectList = <T,>({
   listOptions = [],
   onSelect,
   placeHolder,
-  label,
   selectedValue,
   disabled = false,
 }: IDropDownListProps<T>) => {
@@ -83,7 +80,6 @@ const DropDownSelectList = <T,>({
 
   return (
     <View>
-      {label && <Label style={styles.label}>{label}</Label>}
       <Pressable
         style={[
           styles.container,
@@ -131,14 +127,6 @@ const DropDownSelectList = <T,>({
   );
 };
 
-const Label = ({ children, style = {}, ...props }: TextProps) => {
-  return (
-    <Text style={[styles.text, style]} {...props}>
-      {children}
-    </Text>
-  );
-};
-
 const styles = StyleSheet.create({
   container: {
     height: 51,
@@ -149,10 +137,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  label: {
-    includeFontPadding: false,
-    marginBottom: 6,
   },
   modalContainer: {
     flex: 1,
