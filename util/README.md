@@ -1,7 +1,6 @@
 ## [authSocket](authSocket.ts)
-An example of extending the functionality for a socket.io client. This uses
-a mixin sort of approach to avoid having to mess with any underlying socket.io
-code or prototypes.
+An example of extending the functionality for a socket.io client. Simple approach,
+avoid messing with any underlying socket.io code or prototype.
 
 
 ## [auth0Client](auth0Client.ts)
