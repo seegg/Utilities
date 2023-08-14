@@ -124,12 +124,6 @@ export class Auth0Client {
    * Get the signing key that is associated with kid.
    */
   async getSigningKey(kid: string): Promise<string> {
-    // If the cache is currently being updated wait for it
-    // to complete before retrieving the key.
-    if (this.deferJWKRequest) {
-      await this.deferJWKRequest;
-    }
-
     // Check to see if the cache should be updated.
     await this.updateKeyCacheIfStale();
 
