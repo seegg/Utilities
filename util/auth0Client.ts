@@ -9,8 +9,6 @@
  * For a break down of the claims.
  * @see https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-token-claims
  *
- * In this example the relevant client information are stored
- * as env vars.
  * 
  * Adapted from concepts and examples mentioned here:
  * @see https://auth0.com/blog/navigating-rs256-and-jwks/
