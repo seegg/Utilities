@@ -54,12 +54,6 @@ export interface Auth0ClientOptions {
   ignoreExpiration?: boolean;
 }
 
-//Ignore token expiration date during development.
-const defaultOptions: Auth0ClientOptions = {
-  cacheTime: 60000,
-  ignoreExpiration: process.env.NODE_ENV === 'development',
-};
-
 /**
  * Periodically retrieve JWKs from auth0 to manually authenticate
  * JWT.
@@ -70,6 +64,8 @@ export class Auth0Client {
   /** jwk cache. key value pair, [kid, public key] */
   JWKS: Map<string, string>;
   lastUpdatedAt: number;
+  /** Domain associated with the tenant */
+  domain: string;
   /** Elapsed time in ms before updating the JWK cache. */
   cacheTime: number;
   /** Ignore token expiry date. */
@@ -86,12 +82,14 @@ export class Auth0Client {
    * @param options
    */
   constructor(
-    agent: request.SuperAgentStatic = request,
-    jwtService = jwt,
-    options: Auth0ClientOptions = defaultOptions,
+    agent: request.SuperAgentStatic,
+    jwtService: typeof jwt,
+    domain: string,
+    options: Auth0ClientOptions,
   ) {
     this.request = agent;
     this.JWKS = new Map();
+    this.domain = domain;
     this.lastUpdatedAt = 0;
     this.cacheTime = options?.cacheTime || 60000;
     this.ignoreExpiration =
@@ -108,7 +106,7 @@ export class Auth0Client {
    */
   private async getJwks(): Promise<AUTH0_JWK[]> {
     const res = await request
-      .get(`https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`)
+      .get(`https://${this.domain}/.well-known/jwks.json`)
       .timeout({
         deadline: 10000
       })
