@@ -5,6 +5,10 @@ are discarded.
 
 `{a: 'hello', b: { c: 'world'} } with # as the separator` becomes `{a: 'a', b: { c: 'b#c'}}`
 
+I use this as a helper for an i18n library, converting a translation file into
+an object with proper typing to leverage code completion and suggestions
+instead of typing out the string paths manually.
+
 
 ## [auth0Client](auth0Client.ts)
 Standalone client for authenticating JWTs issued by auth0. Useful for
