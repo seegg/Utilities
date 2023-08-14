@@ -8,7 +8,10 @@ are discarded.
 
 ## [auth0Client](auth0Client.ts)
 Standalone client for authenticating JWTs issued by auth0. Useful for
-authenticating tokens outside of the typical request/response cycles.
+authenticating tokens outside of the typical request/response cycles. Caching
+is handled by the individual instances which means this leans more towards
+singleton side of things, but this can easily be change by swapping in a different
+caching mechanism.
 
 
 ## [useLocation](useLocation.ts)
