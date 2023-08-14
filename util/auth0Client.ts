@@ -239,5 +239,3 @@ export class Auth0Client {
     return cert;
   };
 }
-
-export default new Auth0Client();
