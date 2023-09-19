@@ -1,4 +1,12 @@
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import React, {
+  ReactNode,
+  useEffect,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+  useCallback,
+  useMemo,
+} from 'react';
 import {
   View,
   StyleSheet,
@@ -6,11 +14,31 @@ import {
   PanResponder,
   Easing,
   Platform,
+  StyleProp,
+  ViewStyle,
 } from 'react-native';
 
 export enum BottomDrawerActions {
   OPEN = 'open',
   CLOSE = 'close',
+}
+
+type UnsubscribeFn = () => void;
+export interface DrawerFunctions {
+  /**
+   * Open the bottom drawer. Accepts an delay in ms as an optional
+   * argument.
+   */
+  open: (delay?: number) => void;
+  /**
+   * Add a listener that is invoked when the drawer opens/closes.
+   *
+   * @returns The unsubscribe function.
+   */
+  addEventListener: (
+    event: 'onOpen' | 'onClose',
+    listener: () => void,
+  ) => UnsubscribeFn;
 }
 
 interface IDrawerProps {
@@ -27,235 +55,268 @@ interface IDrawerProps {
   gestureVelocityThreshold?: number;
   /**
    * If drawer height expands more than this value at the end of the
-   * gesture it will trigger the expand animation. default: 200.
+   * gesture it will trigger the expand animation. default: 100.
    */
   heightThreshold?: number;
-  /** Trigger the open and close animation for the drawer at each render for the component. */
-  drawerAction?: BottomDrawerActions;
-  /** Function to be called when the BottomDrawer component opens. */
-  onDrawerOpen?: () => void;
-  /** Function to be called when the BottomDrawer component closes. */
-  onDrawerClose?: () => void;
-  /** Left and right corner radius of the drawer, default: 25 */
-  topCornerRadius?: number;
-  /** Custom dragbar component to render on the drawer. */
-  dragBar?: null | React.FC;
+  /** Custom style for the drawer. */
+  style?: StyleProp<ViewStyle>;
+  /** Custom dragbar component. */
+  dragBar?: React.FC;
   children?: ReactNode;
 }
 
 /**
- * Bottom drawer wrapper for other components. 
+ * Bottom drawer wrapper for other components.
  */
-const BottomDrawer = ({
-  animationDuration = 500,
-  minHeight = 17,
-  maxHeight = 500,
-  gestureVelocityThreshold = 0.5,
-  heightThreshold = 200,
-  topCornerRadius = 25,
-  drawerAction,
-  onDrawerClose,
-  onDrawerOpen,
-  dragBar = null,
-  children,
-}: IDrawerProps) => {
+const BottomDrawer = forwardRef<DrawerFunctions, IDrawerProps>(
+  function BottomDrawer(props: IDrawerProps, ref) {
+    const {
+      animationDuration = 500,
+      minHeight = 17,
+      maxHeight = 500,
+      gestureVelocityThreshold = 0.5,
+      heightThreshold = 100,
+      style = {},
+      dragBar: Dragbar = null,
+      children,
+    } = props;
 
-  if(minHeight > maxHeight) {
-    throw new TypeError(
-      `Bottom drawer min height must be less than or equal max height. minHeight: ${minHeight}, maxHeight: ${maxHeight}.`
-      )
-  }
+    /** Max y translate. i.e. drawer is close. */
+    const maxDrawerHeight = maxHeight - minHeight;
 
-  //Use to animate the drawer height.
-  const animatedHeightValue = useRef(new Animated.Value(minHeight)).current;
+    /** Use to animate the drawer height. */
+    const heightAnim = useRef(new Animated.Value(maxDrawerHeight)).current;
+    /** Current drawer height. Updated from Animated.value callback.*/
+    const currentHeight = useRef(maxDrawerHeight);
+    /** Max drawer height, useRef to prevent stale value inside panResponder.*/
+    const heightMax = useRef(maxHeight);
+    /** use to keep track of the initial height inside panResponder at the start of a gesture.*/
+    const heightInitial = useRef(0);
 
-  //Current drawer height. Updated from Animated.value callback.
-  const currentHeight = useRef(minHeight);
-
-  //Max drawer height, useRef to prevent stale value inside panResponder.
-  const heightMax = useRef(maxHeight);
-
-  //use to keep track of the initial height inside panResponder at the start of a gesture.
-  const heightInitial = useRef(0);
-
-  /**
-   * Keep track of the open and close state of the drawer. Use 'initialOpen' and 'InitialClose'
-   * as the starting state so that when the component is first render the callback functions trigger
-   * by 'open' and 'close' are not triggered.
-   */
-  const [drawerState, setDrawerState] = useState<
-    BottomDrawerActions | 'initialClose' | 'initialOpen'
-  >('initialClose');
-
-  /**
-   * Workaround for accessing the latest drawerState within the Animated callback.
-   */
-  const drawerStateRef = useRef(drawerState);
-
-  //Trigger the height animation base on the drawerAction prop. This allows another component
-  //to open and close the drawer programmatically.
-  useEffect(() => {
-    switch (drawerAction) {
-      case BottomDrawerActions.OPEN:
-        animateHeight(maxHeight);
-        break;
-      case BottomDrawerActions.CLOSE:
-        animateHeight(minHeight);
-        break;
-      default:
-    }
-  }, [drawerAction]);
-
-
-
-  //Trigger the drawer open/close callback function base on the drawer state.
-  useEffect(() => {
-    switch (drawerState) {
-      case BottomDrawerActions.CLOSE:
-        !!onDrawerClose && onDrawerClose();
-        break;
-      case BottomDrawerActions.OPEN:
-        !!onDrawerOpen && onDrawerOpen();
-        break;
-    }
-    drawerStateRef.current = drawerState;
-  }, [drawerState]);
-
-  /**
-   * Function to be called at the end of the Animated height function. Use to decide
-   * if the drawer state needs to be updated base on the current drawer height.
-   */
-  const handleOpenCloseState = () => {
     /**
-     * If the difference between the minHeight/maxHeight and currentHeight is less than the
-     * threshold then the drawer is consider 'close'/'open'.
+     * Stores the callback functions that are invoked when the drawer opens.
      */
-    const heightDiffThreshold = 2;
+    const onOpenListeners = useRef<Map<any, () => void>>(new Map());
+    /**
+     * Stores the callback functions that are invoked when the drawer closes.
+     */
+    const onCloseListeners = useRef<Map<any, () => void>>(new Map());
 
-    const maxHeightDifference = Math.abs(maxHeight - currentHeight.current);
-    const minHeightDifference = Math.abs(currentHeight.current - minHeight);
+    /**
+     * Keep track of the open and close state of the drawer. Use 'initialOpen' and 'InitialClose'
+     * as the starting state so that when the component is first render the callback functions trigger
+     * by 'open' and 'close' are not triggered.
+     */
+    const drawerState = useRef<
+      BottomDrawerActions | 'initialClose' | 'initialOpen'
+    >('initialClose');
 
-    if (maxHeightDifference <= heightDiffThreshold) {
-      if (
-        drawerStateRef.current === BottomDrawerActions.OPEN ||
-        drawerStateRef.current === 'initialOpen'
-      ) {
-        return;
-      }
-      setDrawerState(BottomDrawerActions.OPEN);
-      return;
-    }
+    /**
+     * Function to be called at the end of the Animated height function. Use to decide
+     * if the drawer state needs to be updated base on the current drawer height.
+     */
+    const handleOnOpenCloseDrawer = () => {
+      /**
+       * If the difference between the minHeight/maxHeight and currentHeight is less than the
+       * threshold then the drawer is consider 'close'/'open'.
+       */
+      const heightDiffThreshold = 2;
 
-    if (minHeightDifference <= heightDiffThreshold) {
-      if (
-        drawerStateRef.current === BottomDrawerActions.CLOSE ||
-        drawerStateRef.current === 'initialClose'
-      ) {
-        return;
-      }
-
-      setDrawerState(BottomDrawerActions.CLOSE);
-    }
-  };
-
-  /**
-   * Animate the change in drawer height. At the end of the animation, if currentHeight
-   * is closer to the minHeight then the drawer is consider 'close', and if it's
-   * closer to maxHeight then the drawer is consider 'open'
-   * @param toHeight The height to animate to.
-   * @param duration The duration of the animation.
-   */
-  const animateHeight = (toHeight: number, duration = animationDuration) => {
-    Animated.timing(animatedHeightValue, {
-      toValue: toHeight,
-      duration: duration,
-      easing: Easing.out(Easing.exp),
-      useNativeDriver: false,
-    }).start(() => {
-      handleOpenCloseState();
-    });
-  };
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => {
-        //initial drawer height at the start of the gesture.
-        heightInitial.current = currentHeight.current;
-      },
-      onPanResponderMove: (e, { dy }) => {
-        //Subtract the changes in the y axis from the initial height to get
-        //the new height, only apply the changes if it's within the min max range.
-        const adjustedHeight = heightInitial.current - dy;
-
-        if (adjustedHeight > heightMax.current) {
-          animatedHeightValue.setValue(heightMax.current);
-        } else if (adjustedHeight < minHeight) {
-          animatedHeightValue.setValue(minHeight);
-        } else {
-          animatedHeightValue.setValue(adjustedHeight);
-        }
-      },
-      onPanResponderRelease: (e, { vy }) => {
-        //if the gesture's latest y velocity is over the threshold,
-        //open or collapse the drawer base on the velocity's direction.
-        if (Math.abs(vy) > gestureVelocityThreshold) {
-          if (vy > 0) {
-            animateHeight(minHeight);
-          } else {
-            animateHeight(heightMax.current);
-          }
+      if (Math.abs(currentHeight.current) <= heightDiffThreshold) {
+        if (
+          drawerState.current === BottomDrawerActions.OPEN ||
+          drawerState.current === 'initialOpen'
+        ) {
           return;
         }
+        drawerState.current = BottomDrawerActions.OPEN;
+        onOpenListeners.current.forEach((listener) => {
+          listener();
+        });
+        return;
+      }
 
-        //if the drawer has open pass the height threshold
-        //open it to max height otherwise collapse it back down.
-        if (currentHeight.current - minHeight > heightThreshold) {
-          animateHeight(heightMax.current);
-        } else {
-          animateHeight(minHeight);
+      if (
+        Math.abs(currentHeight.current - maxDrawerHeight) <= heightThreshold
+      ) {
+        if (
+          drawerState.current === BottomDrawerActions.CLOSE ||
+          drawerState.current === 'initialClose'
+        ) {
+          return;
         }
-      },
-    }),
-  ).current;
-
-  //set up the handlers for animated height change.
-  useEffect(() => {
-    //Update the height ref when the animated value changes.
-    animatedHeightValue.addListener(({ value }) => {
-      currentHeight.current = value;
-    });
-
-    //clean up.
-    return () => {
-      if (animatedHeightValue.hasListeners()) {
-        animatedHeightValue.removeAllListeners();
+        drawerState.current = BottomDrawerActions.CLOSE;
+        onCloseListeners.current.forEach((listener) => {
+          listener();
+        });
       }
     };
-  }, []);
 
-  //Update max height if there any changes from parent component.
-  useEffect(() => {
-    heightMax.current = maxHeight;
-  }, [maxHeight]);
+    /**
+     * Animate the change in drawer height. At the end of the animation, if currentHeight
+     * is closer to the minHeight then the drawer is consider 'close', and if it's
+     * closer to maxHeight then the drawer is consider 'open'
+     * @param toHeight The height to animate to.
+     * @param delay Optional delay before starting the animation.
+     * @param duration The duration of the animation.
+     */
+    const animateHeight = useCallback(
+      (toHeight: number, delay = 0, duration = animationDuration) => {
+        Animated.timing(heightAnim, {
+          toValue: toHeight,
+          duration: duration,
+          easing: Easing.out(Easing.exp),
+          delay,
+          useNativeDriver: true,
+        }).start(() => {
+          handleOnOpenCloseDrawer();
+        });
+      },
+      [],
+    );
 
+    /**
+     * Methods for adding listeners and for controlling the behaviour
+     * of the drawer.
+     */
+    useImperativeHandle<DrawerFunctions, DrawerFunctions>(
+      ref,
+      () => {
+        return {
+          open: (delay = 0) => {
+            animateHeight(0, delay);
+          },
+          addEventListener: (event, listener) => {
+            if (event === 'onOpen') {
+              onOpenListeners.current.set(listener, listener);
+              return () => {
+                onOpenListeners.current.delete(listener);
+              };
+            }
+            onCloseListeners.current.set(listener, listener);
+            return () => {
+              onCloseListeners.current.delete(listener);
+            };
+          },
+        };
+      },
+      [],
+    );
+
+    const panResponder = useRef(
+      useMemo(() => {
+        return PanResponder.create({
+          onStartShouldSetPanResponder: () => true,
+          onMoveShouldSetPanResponder: () => true,
+          onPanResponderGrant: () => {
+            //initial drawer height at the start of the gesture.
+            heightInitial.current = currentHeight.current;
+          },
+          onPanResponderMove: (_, { dy }) => {
+            //Subtract the changes in the y axis from the initial height to get
+            //the new height, only apply the changes if it's within the min max range.
+            const adjustedHeight = heightInitial.current + dy;
+            if (adjustedHeight < 0) {
+              heightAnim.setValue(0);
+            } else if (adjustedHeight > maxDrawerHeight) {
+              heightAnim.setValue(maxDrawerHeight);
+            } else {
+              heightAnim.setValue(adjustedHeight);
+            }
+          },
+          onPanResponderRelease: (_, { dy, vy }) => {
+            //if the gesture's latest y velocity is over the threshold,
+            //open or collapse the drawer base on the velocity's direction.
+            if (Math.abs(vy) > gestureVelocityThreshold) {
+              if (vy > 0) {
+                animateHeight(maxDrawerHeight);
+              } else {
+                animateHeight(0);
+              }
+              return;
+            }
+            let open = false;
+            // if the drawer has open pass the height threshold
+            // open/close it base on the current drawer state.
+            if (heightThreshold - Math.abs(dy) < 0) {
+              if (
+                drawerState.current === 'initialClose' ||
+                drawerState.current === BottomDrawerActions.CLOSE
+              ) {
+                open = true;
+              }
+            } else if (
+              drawerState.current === 'initialOpen' ||
+              drawerState.current === BottomDrawerActions.OPEN
+            ) {
+              open = true;
+            }
+            if (open) {
+              animateHeight(0);
+            } else {
+              animateHeight(maxDrawerHeight);
+            }
+          },
+        });
+      }, []),
+    ).current;
+
+    //set up the handlers for animated height change.
+    useEffect(() => {
+      //Update the height ref when the animated value changes.
+      heightAnim.addListener(({ value }) => {
+        currentHeight.current = value;
+      });
+
+      //clean up.
+      return () => {
+        if (heightAnim.hasListeners()) {
+          heightAnim.removeAllListeners();
+        }
+      };
+    }, []);
+
+    //Update max height if there any changes from parent component.
+    useEffect(() => {
+      heightMax.current = maxHeight;
+    }, [maxHeight]);
+
+    return (
+      <Animated.View
+        style={[
+          styles.container,
+          {
+            height: maxHeight,
+            transform: [{ translateY: heightAnim }],
+          },
+          style,
+        ]}
+      >
+        <View {...panResponder.panHandlers}>
+          {Dragbar ? <Dragbar /> : <DefaultDragBar />}
+        </View>
+        <View style={{ overflow: 'hidden', flex: 1 }}>{children}</View>
+      </Animated.View>
+    );
+  },
+);
+
+const DefaultDragBar = () => {
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          height: animatedHeightValue,
-          borderTopLeftRadius: topCornerRadius,
-          borderTopRightRadius: topCornerRadius,
-        },
-      ]}
+    <View
+      style={{
+        height: 17,
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
     >
-      <View {...panResponder.panHandlers}>
-        {dragBar ? dragBar() : <View style={{height: 20}}/>}
-      </View>
-      <View style={{ overflow: 'hidden', flex: 1 }}>{children}</View>
-    </Animated.View>
+      <View 
+        style={{
+          width: 100,
+          borderBottomWidth: 1,
+        }}
+      />
+    </View>
   );
 };
 
@@ -263,12 +324,11 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     position: 'absolute',
-    bottom: 0,
     borderTopWidth: 4,
+    bottom: 0,
     borderTopColor: 'rgba(0,0,0,0.005)',
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    backgroundColor: 'white',
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
     overflow: 'hidden',
     shadowColor: 'black',
     ...Platform.select({
