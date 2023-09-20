@@ -31,6 +31,12 @@ export interface DrawerFunctions {
    */
   open: (delay?: number) => void;
   /**
+   * Close the bottom drawer. Accepts an delay in ms as an optional
+   * argument.
+   */
+  close: (delay?: number) => void;
+
+  /**
    * Add a listener that is invoked when the drawer opens/closes.
    *
    * @returns The unsubscribe function.
@@ -185,6 +191,9 @@ const BottomDrawer = forwardRef<DrawerFunctions, IDrawerProps>(
         return {
           open: (delay = 0) => {
             animateHeight(0, delay);
+          },
+          close: (delay = 0) => {
+            animateHeight(maxDrawerHeight, delay);
           },
           addEventListener: (event, listener) => {
             if (event === 'onOpen') {
