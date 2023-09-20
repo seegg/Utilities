@@ -38,13 +38,17 @@ export interface DrawerFunctions {
 
   /**
    * Add a listener that is invoked when the drawer opens/closes.
-   *
    * @returns The unsubscribe function.
    */
   addEventListener: (
     event: 'onOpen' | 'onClose',
     listener: () => void,
   ) => UnsubscribeFn;
+  removeEventListener: (
+    event: 'onOpen' | 'onClose',
+    listener: () => void,
+  ) => void;
+  removeAllListeners: (event: 'onOpen' | 'onClose',) => void;
 }
 
 interface IDrawerProps {
@@ -207,6 +211,22 @@ const BottomDrawer = forwardRef<DrawerFunctions, IDrawerProps>(
               onCloseListeners.current.delete(listener);
             };
           },
+          removeEventListener: (event, listener) => {
+            if (event === 'onOpen') {
+              onOpenListeners.delete(listener);
+              return;
+            }
+            onCloseListeners.delete(listener);
+            return;
+          },
+          removeAllListeners: (event) => {
+            if(event === 'onOpen'){
+              onOpenListeners.clear();
+              return;
+            }
+            onCloseListeners.delete();
+            return;
+          }
         };
       },
       [],
